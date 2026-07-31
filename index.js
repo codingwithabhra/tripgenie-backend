@@ -41,9 +41,10 @@ Use exactly this schema and field names:
   "bestTime": "string - month(s)/season with one sentence why.",
   "topAttractions": ["string", "string", "string"],
   "sampleItinerary": [
-     { "day": 1, "plan": "string" },
-     { "day": 2, "plan": "string" },
-     { "day": 3, "plan": "string" },
+    {
+      "day": number,
+      "plan": "string"
+    }
   ],
   "estimatedBudgetEuros": {"low": number, "mid": number, "high": number},
   "localTips": ["string", "string"]
@@ -52,6 +53,10 @@ Use exactly this schema and field names:
 Rules-
 - Output valid JSON only, nothing else.
 - Keep numbers unquoted.
+- Generate EXACTLY the number of itinerary objects requested by the user.
+- Number the itinerary days sequentially starting from 1.
+- If the user requests 3 days, return 3 itinerary objects.
+- If the user requests 5 days, return 5 itinerary objects.
 - If unsure, use null or [] but keep the schema.
 `;
 
@@ -95,9 +100,10 @@ const startServer = async () => {
         // demo 'GET Endpoint' that calls the model and returns the parsed json
         app.get("/api/travel-plan", async (req, res) => {
 
-            const city = (req.query.city || 'Tokyo').toString();
-            const country = (req.query.country || 'Japan').toString();
-            const days = Number(req.query.days || 3) || 3;
+            const destination = (req.query.destination || 'Tokyo, Japan').toString();
+            const [city, country] = destination.split(",").map(item => item.trim());
+
+            const days = Number(req.query.days || 3);
 
             try {
                 // STEP 1 : Check MongoDB first
@@ -109,7 +115,7 @@ const startServer = async () => {
 
                 if (existingPlan) {
                     console.log("Returning plan from MongoDB...");
-                    return res.json({cached:true, data: existingPlan});
+                    return res.json({ cached: true, data: existingPlan });
                 }
 
                 // STEP 2 : No plan found
@@ -142,7 +148,7 @@ const startServer = async () => {
 
                     await travelPlan.save();
 
-                    return res.json({cached:false, data: travelPlan});
+                    return res.json({ cached: false, data: travelPlan });
                 } else {
                     return res.status(502).json({ error: "Model did not return valid json", raw: content });
                 }
