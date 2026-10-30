@@ -4,6 +4,7 @@ import cors from "cors";
 import OpenAI from 'openai';
 import { initialiseDatabase } from "./db/db.connect.js";
 import { TravelPlan } from "./model/trip.model.js";
+import userRoutes from "./routes/user.routes.js";
 
 
 const app = express();
@@ -158,6 +159,10 @@ const startServer = async () => {
                 return res.status(500).json({ error: "Upstream error", details: message });
             }
         });
+
+        // --------------------------------- FOR USER ROUTES --------------------------------------
+
+        app.use("/auth", userRoutes);
 
         // ---------------------------------------- SERVER ----------------------------------------
 
